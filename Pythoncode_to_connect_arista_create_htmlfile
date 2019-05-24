@@ -1,0 +1,175 @@
+#!/usr/bin/python2.7
+ 
+import pprint
+import pyeapi
+import traceback
+import subprocess
+import re
+import os
+import mysql.connector
+import schedule
+import ssl
+import os
+import shutil
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError: pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+switches =[]
+i=101
+while i<137:
+    fourh_octet=i
+    IP= "10.129.32."+str(fourh_octet)
+    i = i+1
+    switches.append(IP)
+
+f=open('/var/www/html/index_temp.html','w')
+f.write('<div><p>@DESIGNED and POWERED BY CIHAN AKGUN and MAHMUT AYDIN</p></div>')
+
+f.write('<style>' + '\n' + 'body {' + '\n' + "font-family: verdana;" + '\n' + "background-size: cover;" + '\n' + "height: 100vh;" + '\n' + "}" + '\n' + '.button {font-size: 12px; padding: 10px; color: black;border: none;border - radius: 20px/50px;text - decoration: none;cursor: pointer;transition: all 0.3s ease - out;}' + '\n' + '.button:hover {background: none;}' + '\n' + '.overlay {position: fixed;top: 0;bottom: 0;left: 0;right: 0;background: rgba(0, 0, 0, 0.7);transition: opacity 500ms; visibility: hidden;opacity: 0;}' + '\n' + '.overlay:target {visibility: visible;opacity: 1;}' + '\n' + '.popup {margin: 30px auto;padding: 15px;background: #fff;border-radius: 5px;width: 8% ;height: 20% auto;position: absolute;left:30px;transition: all 5s ease-in-out;}' + '\n'+'.popup2 {margin: 30px auto;padding: 15px;background: #fff;border-radius: 5px;width: 15%  ;height: 20% auto;position: absolute;left:30px;transition: all 5s ease-in-out;}' + '\n' + '.popup h2 {margin-top: 0;font-size: 12px;color: black;font-family: verdana;}' + '\n' + '.popup2 h2 {margin-top: 0;font-size: 12px;color: black;font-family: verdana;}' + '\n'+'.popup .close {position: absolute;top: 5px;right: 15px;transition: all 200ms;font-size: 20px;font-weight: bold;text-decoration: none;color: black;}' + '.popup .close:hover {color: #5AD3F9;}' + '\n'+'.popup2 .close {position: absolute;top: 5px;right: 15px;transition: all 200ms;font-size: 20px;font-weight: bold;text-decoration: none;color: black;}' + '.popup2 .close:hover {color: #5AD3F9;}' + '\n'+'</style>')
+f.write ('<table  border="3" style="font-family: verdana; font-size: 12px;">')
+f.write ('<tr>')
+
+f.write ('<style>tr:nth-child(even) {background: #CCC}</style>')
+f.write ('<style>tr:nth-child(odd) {background: #FFF}</style>')
+f.write ('<th  bgcolor="#5AD3F9" width="220">SWITCH NAME</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="150">INTERFACE NUMBER</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="110">CUSTOMER NAME</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="150">INTERFACE STATUS</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="350">TIME</th>')
+#f.write ('<th  bgcolor="#5AD3F9" width="130">CONFIG</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="350">DETAIL</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="130">MAC ADDRESS</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="200">INBOUND MBit/5min</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="200">INBOUND PACKET/5min</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="200">OUTBOUND MBit/5min</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="200">OUTBOUND PACKET/5min</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="200">INBOUND DISCARD</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="200">OUTBOUND DISCARD</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="200">SPEED</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="200">DUBLEX</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="200">MEDIATYPE</th>')
+f.write ('<th  bgcolor="#5AD3F9" width="200">DETECTEDSFP</th>')
+#f.write ('<th  bgcolor="#5AD3F9" width="200">WAVELENGTH</th>')
+f.write ('</tr>')
+
+for i in switches:
+    try:
+        try:
+		print i
+        	node = pyeapi.connect(transport="https", host=i, username="xxx", password="xxxx", port=None)
+	except:
+		continue
+        #showinterface= node.execute(["show interfaces  phy detail"])
+        status=node.execute(["show interfaces  status"])
+        #pprint.pprint(showinterface['result'][0]['interfacePhyStatuses'])
+        hostname=node.execute(["show hostname"])
+        PHY=node.execute("show interfaces   phy  detail | include PHY")
+
+        leaf=hostname['result'][0]['hostname']
+        list=[]
+        for m in status['result'][0]['interfaceStatuses']:
+            try:
+                    list.append(m)
+		    #config = "show running-config"
+                    command = "show interfaces " + ' ' + m + ' ' + "phy detail"
+                    maccommand="show  mac  address-table   interface " + ' ' + m
+                    showinterface=node.execute([command])
+                    trafficcommand = "show interfaces" + ' ' + m
+                    sfpcommand=" show interfaces"+' '+m+' '+ "transceiver  hardware"
+		    #run_config=node.execute([config])
+		    #run_config_demet=run_config['result'][0]['cmds']['interface'+' '+m]['cmds']
+
+                    #config_list=" "
+                    #for  cmd in run_config_demet:
+                    	#config_list = config_list + '\n'+'<p>'+cmd+'</p>'
+
+
+                    showmac=node.execute([maccommand])
+                    showtraffic=node.execute([trafficcommand])
+                    showsfp=node.execute([sfpcommand])
+
+
+                    text=showinterface['result'][0]['interfacePhyStatuses'][m]['phyStatuses'][0]['text']
+                    logcontent=re.split('\n',text) #show interface ethernet phy detail output result is parsed here by enter
+                    parselogcontent=re.split('e:',logcontent[0]) # output of above is parsed again here in order to get only time
+                    parse2logcontent = re.split('ate', logcontent[1])#second line of above parsed detail is parsed again in order to get only link status and timer
+                    
+                    
+                    try:
+                        maclist=showmac['result'][0]['unicastTable']['tableEntries']
+                        inboundbit=showtraffic["result"][0]["interfaces"][m]["interfaceStatistics"]["inBitsRate"]
+                        carp_inboundbit=format(float(inboundbit/long(1000000)),'.2f')
+
+			inboundpacket=showtraffic["result"][0]["interfaces"][m]["interfaceStatistics"]["inPktsRate"]
+                        outboundbit = showtraffic["result"][0]["interfaces"][m]["interfaceStatistics"]["outBitsRate"]
+                        carp_outboundbit = format(float(outboundbit / long(1000000)),'.2f')
+                        outboundpacket = showtraffic["result"][0]["interfaces"][m]["interfaceStatistics"]["outPktsRate"]
+                        indiscard= showtraffic["result"][0]["interfaces"][m]['interfaceCounters']['inDiscards']
+                        outdiscard = showtraffic["result"][0]["interfaces"][m]['interfaceCounters']['outDiscards']
+                        speed=showtraffic["result"][0]["interfaces"][m]['bandwidth']
+                        bol_speed=long(speed/long(1000000000))
+                        converted_speed=str(bol_speed)+ "Gi"
+                        dublex=showtraffic["result"][0]["interfaces"][m]['duplex']
+                        mediatype = showsfp['result'][0]['interfaces'][m]['mediaType']
+                        detectedsfp = showsfp['result'][0]['interfaces'][m]['detectedMediaType']
+                        #wavelength=showsfp['result'][0]['interifaces'][m]['wavelength']
+
+                    except Exception as e:
+               		        print "error1" +' '+i+' '+ m
+			
+ 				continue                 
+		    
+
+		    string=" "
+                    
+                    for t in maclist:
+                        string=string+t['macAddress']+ '\n'
+                    
+
+                    #print "system working for every m" + ' ' + m
+                    
+
+	 	    maclistesi = string
+                    if len(status['result'][0]['interfaceStatuses'][m][
+                                       'description']) < 1:
+						continue
+                    elif str(status['result'][0]['interfaceStatuses'][m]['description'])==str("spine1"):
+                                continue
+
+                    elif str(status['result'][0]['interfaceStatuses'][m]['description'])==str("spine2"):
+                                continue
+
+                    elif str(status['result'][0]['interfaceStatuses'][m]['description'])==str("MLAG-PeerLink"):
+                                continue
+
+
+
+		    elif len(status['result'][0]['interfaceStatuses'][m][
+                                       'description']) >= 1:
+   		    				htmlfile = str('<tr><td>' + leaf + '</td>' + '<td>'+'<a href=\"javascript:window.open(\'/noc/?sw='+leaf+'&int='+m+'\',\'_blank\',\'fullscreen=no,location=no,menubar=no,resizable=yes,status=no,height=250,width=350\')\">'+m+'</a>'+ '</td>' + '<td>' +status['result'][0]['interfaceStatuses'][m]['description'] + '</td>' + '<td>' + status['result'][0]['interfaceStatuses'][m]['linkStatus'] + '</td>' + '<td>' + parselogcontent[1]+'</td>' '</td>' + '<td>' + parse2logcontent[1] + '</td>' + '<td align="left">' + '<a class ="button" href='+ '"#pop'+i+'up'+m+'"'+'>See mac address table of'+' '+m + '</a>' + '\n' + '<div id ='+ '"pop'+i+'up'+m+'"'+'class ="overlay">' + '\n' + '<div class ="popup">' + '\n' + '<h2> </h2>' +'\n'+ '<h2>' + maclistesi + '</h2>' + '\n' + '<a class ="close" href="#">&times; </a>' + '\n' + '</div>' + '\n' + '</div></td>' + '<td>' + str(carp_inboundbit) + '</td>' + '<td>'+ str(inboundpacket) + '</td>' + '<td>' + str(carp_outboundbit) + '</td>' + '<td>' + str(outboundpacket) + '<td>' + str(indiscard) + '</td>' + '<td>' + str(outdiscard) + '</td>' + '<td>' + converted_speed + '</td>' + '<td>' + dublex + '</td>' + '<td>' + mediatype + '</td>' + '<td>' + detectedsfp + '</td></tr>' + '\n')
+
+		    f.write (htmlfile)
+
+                  
+
+            except:
+		    	print "error 2"+' '+i+' '+ m
+                    	
+                    	
+                        continue
+
+
+
+
+    except Exception as e:
+        print 'ERROR : >> ' + str(e)
+        print(traceback.format_exc())
+        continue
+
+f.write ("</table>\n")
+f.close()
+shutil.move("/var/www/html/index_temp.html", "/var/www/html/index.html")
